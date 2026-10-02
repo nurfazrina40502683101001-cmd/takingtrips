@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Virtual Lab: Taking Trips</title>
+    <style>
+        :root {
+            --pastel-blue: #D6EAF8;
+            --pastel-blue-dark: #85C1E9;
+            --pastel-pink: #FADBD8;
+            --pastel-pink-dark: #F1948A;
+            --white: #FFFFFF;
+            --text-dark: #2C3E50;
+            --text-gray: #5D6D7E;
+            --success: #2ECC71;
+            --error: #E74C3C;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--pastel-blue) 0%, var(--white) 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Container Utama menyerupai tampilan Handphone (Portrait) */
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .bg-animations {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .cloud {
+            position: absolute;
+            background: #fff;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: moveClouds linear infinite;
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        @keyframes moveClouds {
+            from { transform: translateX(-150px); }
+            to { transform: translateX(500px); }
+        }
+
+        .flower-petal {
+            position: absolute;
+            background-color: var(--pastel-pink);
+            border-radius: 15px 0 15px 0;
+            opacity: 0.7;
+            animation: fall linear infinite, sway 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes fall {
+            0% { top: -10%; transform: rotate(0deg); }
+            100% { top: 110%; transform: rotate(360deg); }
+        }
+        @keyframes sway {
+            0% { margin-left: 0px; }
+            100% { margin-left: 50px; }
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            padding: 20px;
+            z-index: 10;
+            position: relative;
+            animation: fadeIn 0.5s ease;
+            overflow-y: auto;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 2px solid var(--pastel-blue);
+        }
+
+        .btn {
+            background: var(--pastel-pink);
+            color: var(--text-dark);
+            border: none;
+            padding: 14px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background: var(--pastel-pink-dark);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+        .btn-blue {
+            background: var(--pastel-blue-dark);
+            color: white;
+        }
+        .btn-blue:hover {
+            background: #5DADE2;
+        }
+
+        .title-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--pastel-blue-dark);
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .subtitle-text {
+            font-size: 14px;
+            color: var(--text-gray);
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .interactive-area {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .draggable-word {
+            background: var(--white);
+            border: 2px dashed var(--pastel-blue-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .draggable-word.selected {
+            background: var(--pastel-blue-dark);
+            color: white;
+            border-style: solid;
+            transform: scale(1.1);
+        }
+
+        .sentence-box {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--white);
+            border-radius: 8px;
+            border-left: 4px solid var(--pastel-pink-dark);
+        }
+
+        .drop-zone {
+            display: inline-block;
+            width: 100px;
+            height: 30px;
+            border-bottom: 2px solid var(--text-dark);
+            text-align: center;
+            color: var(--pastel-blue-dark);
+            font-weight: bold;
+            margin: 0 5px;
+            cursor: pointer;
+            vertical-align: middle;
+            background: rgba(214, 234, 248, 0.3);
+            border-radius: 4px 4px 0 0;
+            transition: background 0.3s;
+        }
+        .drop-zone:hover {
+            background: rgba(214, 234, 248, 0.8);
+        }
+
+        .feedback-box {
+            display: none;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: fadeIn 0.3s;
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            background: var(--white);
+            border: 2px solid var(--pastel-blue);
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .quiz-option:hover {
+            background: var(--pastel-blue);
+        }
+        .quiz-option.correct {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        .quiz-option.wrong {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+        
+        .header-nav {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--pastel-blue-dark);
+            cursor: pointer;
+            margin-right: 15px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border: 2px solid var(--pastel-blue);
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            text-align: center;
+            transition: all 0.3s;
+            color: var(--text-dark);
+            font-weight: bold;
+        }
+        .login-input:focus {
+            border-color: var(--pastel-blue-dark);
+            box-shadow: 0 0 8px rgba(133, 193, 233, 0.5);
+        }
+        
+        .emoji-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 120px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .emoji-popup.show {
+            animation: floatUp 2.5s forwards;
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            70% { transform: translate(-50%, -60%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -100%) scale(0.8); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animations" id="bg-anims">
+        <!-- Clouds will be generated by JS -->
+    </div>
+
+    <div class="app-container">
+        
+        <!-- COVER SCREEN -->
+        <div id="screen-home" class="screen active" style="align-items: center; justify-content: center; text-align: center;">
+            <div class="title-text" style="font-size: 20px; color: var(--text-gray);">MTs Muhajirin Biluhu</div>
+            <div class="title-text" style="font-size: 28px; margin-top: 10px; color: var(--pastel-blue-dark);">Virtual English Lab</div>
+            <div class="subtitle-text">Taking Trips: Time Sequence Connectors</div>
+            
+            <div style="background: var(--pastel-pink); color: var(--text-dark); padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                👩‍🏫 By: Miss Nanda
+            </div>
+            
+            <!-- SVG Kartun Perempuan Berhijab Pink -->
+            <div style="margin: 20px 0;">
+                <svg viewBox="0 0 100 120" width="160" height="160">
+                    <!-- Badan/Baju -->
+                    <path d="M 20 120 Q 50 80 80 120" fill="#AEC6CF"/>
+                    <!-- Hijab Belakang -->
+                    <path d="M 20 50 C 15 20 85 20 80 50 C 80 80 95 110 70 120 C 50 125 30 120 5 110 C 20 90 20 50 20 50" fill="#FADBD8"/>
+                    <!-- Wajah -->
+                    <circle cx="50" cy="52" r="20" fill="#FFE0BD"/>
+                    <!-- Pipi Merona -->
+                    <ellipse cx="38" cy="56" rx="4" ry="2.5" fill="#FF99A8" opacity="0.6"/>
+                    <ellipse cx="62" cy="56" rx="4" ry="2.5" fill="#FF99A8" opacity="0.6"/>
+                    <!-- Mata -->
+                    <circle cx="42" cy="50" r="2.5" fill="#2C3E50"/>
+                    <circle cx="58" cy="50" r="2.5" fill="#2C3E50"/>
+                    <!-- Senyum -->
+                    <path d="M 45 60 Q 50 65 55 60" fill="transparent" stroke="#2C3E50" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div style="text-align: center; font-weight: 800; color: var(--pastel-pink-dark); margin: 15px 0; font-size: 18px;">
+                ✨ Fitur Belajar ✨
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 25px;">
+                <div style="background: white; border: 2px solid var(--pastel-blue); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📖</div>
+                    <div style="font-weight: bold; color: var(--pastel-blue-dark); font-size: 14px; margin-bottom: 4px;">Materi</div>
+                    <div style="font-size: 11px; color: var(--text-gray); line-height: 1.3;">Pantai Botuboluo</div>
+                </div>
+                
+                <div style="background: white; border: 2px solid var(--pastel-blue); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+                    <div style="font-size: 32px; margin-bottom: 8px;">🧩</div>
+                    <div style="font-weight: bold; color: var(--pastel-blue-dark); font-size: 14px; margin-bottom: 4px;">Simulasi</div>
+                    <div style="font-size: 11px; color: var(--text-gray); line-height: 1.3;">Susun Kalimat</div>
+                </div>
+                
+                <div style="background: white; border: 2px solid var(--pastel-blue); border-radius: 12px; padding: 15px 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03); grid-column: span 2;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📝</div>
+                    <div style="font-weight: bold; color: var(--pastel-blue-dark); font-size: 14px; margin-bottom: 4px;">Kuis Evaluasi</div>
+                    <div style="font-size: 11px; color: var(--text-gray); line-height: 1.3;">Dengan Umpan Balik Pintar</div>
+                </div>
+            </div>
+
+            <div style="width: 100%; margin-bottom: 15px;">
+                <input type="text" id="student-name" class="login-input" placeholder="Masukkan Nama Lengkapmu" autocomplete="off">
+                <input type="text" id="student-class" class="login-input" placeholder="Kelas (cth: IX-A)" autocomplete="off">
+                <input type="text" id="access-code" class="login-input" placeholder="Kode Akses (cth: BILUHU)" autocomplete="off">
+                <div id="login-error" style="color: var(--error); font-size: 13px; font-weight: bold; display: none; margin-bottom: 10px;"></div>
+            </div>
+
+            <button class="btn" onclick="loginAndStart()">Mulai Belajar 🚀</button>
+        </div>
+
+        <div id="screen-material" class="screen">
+            <div class="header-nav">
+                <button class="back-btn" onclick="showScreen('screen-home')">❮</button>
+                <div class="title-text" style="font-size: 20px; text-align: left;">Summary</div>
+            </div>
+            
+            <div class="card" style="border-color: var(--pastel-pink-dark); background: linear-gradient(to right, #FFFDFD, #FFF0F0);">
+                <h3 style="color: var(--pastel-pink-dark); margin-bottom: 8px; font-size: 16px;">🎯 Tujuan Pembelajaran</h3>
+                <p style="font-size: 13px; text-align: justify; line-height: 1.5;">
+                    Peserta didik mampu <b>mengidentifikasi</b> dan <b>menggunakan</b> kata hubung urutan waktu (<i>Time Sequence Connectors: once, as soon as, before, after</i>) untuk merangkai dua kejadian di masa lampau dengan tepat sesuai konteks kegiatan <i>Taking Trips</i>.
+                </p>
+            </div>
+
+            <div class="card">
+                <h3 style="color: var(--pastel-blue-dark); margin-bottom: 10px;">Trip to Botuboluo Beach 🏖️</h3>
+                <p style="font-size: 14px; text-align: justify; margin-bottom: 15px;">
+                    Halo teman-teman! Saat menceritakan pengalaman liburan masa lalu (<em>Recount Text</em>) seperti piknik ke Pantai Botuboluo di Biluhu, kita sering menggunakan <b>Time Sequence Connectors</b> (kata hubung urutan waktu) untuk merangkai dua kejadian.
+                </p>
+                <div style="background: var(--pastel-blue); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <b>Rumus Umum:</b><br>
+                    Connector + [Kejadian 1], [Kejadian 2]<br>
+                    <i>atau</i><br>
+                    [Kejadian 2] + Connector + [Kejadian 1]
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="color: var(--pastel-pink-dark); margin-bottom: 10px;">4 Connectors Penting:</h3>
+                
+                <ul style="font-size: 14px; line-height: 1.6; padding-left: 15px;">
+                    <li style="margin-bottom: 10px;">
+                        <b>1. Before (Sebelum)</b><br>
+                        Kejadian setelah 'before' terjadi paling akhir.<br>
+                        <i>Ex: We bought tickets <b>before</b> we entered the beach.</i>
+                    </li>
+                    <li style="margin-bottom: 10px;">
+                        <b>2. After (Setelah)</b><br>
+                        Kejadian setelah 'after' terjadi lebih dulu.<br>
+                        <i>Ex: <b>After</b> we swam, we ate grilled fish.</i>
+                    </li>
+                    <li style="margin-bottom: 10px;">
+                        <b>3. As soon as (Segera setelah)</b><br>
+                        Menunjukkan kejadian berurutan dengan sangat cepat.<br>
+                        <i>Ex: <b>As soon as</b> it rained, we ran to the gazebo.</i>
+                    </li>
+                    <li style="margin-bottom: 10px;">
+                        <b>4. Once (Segera setelah / Ketika sudah)</b><br>
+                        Mirip 'as soon as'.<br>
+                        <i>Ex: <b>Once</b> the sun set, we went home.</i>
+                    </li>
+                </ul>
+            </div>
+
+            <button class="btn btn-blue" onclick="showScreen('screen-simulation')">Lanjut ke Lab Interaktif 🕹️</button>
+        </div>
+
+        <div id="screen-simulation" class="screen">
+            <div class="header-nav">
+                <button class="back-btn" onclick="showScreen('screen-material')">❮</button>
+                <div class="title-text" style="font-size: 20px;">Interactive Lab</div>
+            </div>
+
+            <p style="font-size: 14px; margin-bottom: 15px; font-weight: 600;">
+                <span style="font-size: 20px;">👆</span> <b>Cara Main:</b> Sentuh (Tap) kata hubung di dalam kotak putus-putus, lalu sentuh garis kosong pada kalimat yang tepat!
+            </p>
+
+            <div class="word-bank" id="sim-word-bank">
+                <div class="draggable-word" onclick="selectWord(this, 'Before')">Before</div>
+                <div class="draggable-word" onclick="selectWord(this, 'After')">After</div>
+                <div class="draggable-word" onclick="selectWord(this, 'As soon as')">As soon as</div>
+                <div class="draggable-word" onclick="selectWord(this, 'Once')">Once</div>
+            </div>
+
+            <div class="interactive-area">
+                <div class="sentence-box">
+                    1. <span class="drop-zone" id="dz-1" onclick="placeWord(1)">......</span> we arrived at Botuboluo Beach, we immediately took a selfie together! 📸
+                </div>
+                <div id="fb-sim-1" class="feedback-box"></div>
+            </div>
+
+            <div class="interactive-area">
+                <div class="sentence-box">
+                    2. We prepared our swimming suits <span class="drop-zone" id="dz-2" onclick="placeWord(2)">......</span> we jumped into the sea. 🌊
+                </div>
+                <div id="fb-sim-2" class="feedback-box"></div>
+            </div>
+
+            <button class="btn" style="display:none; margin-top: 20px;" id="btn-to-quiz" onclick="showScreen('screen-quiz')">Hebat! Lanjut ke Kuis 📝</button>
+        </div>
+
+        <div id="screen-quiz" class="screen">
+            <div class="header-nav">
+                <button class="back-btn" onclick="showScreen('screen-simulation')">❮</button>
+                <div class="title-text" style="font-size: 20px;">Mini Quiz</div>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; color: var(--pastel-blue-dark);">
+                    <span>Pertanyaan <span id="q-current">1</span>/5</span>
+                    <span>Skor: <span id="q-score">0</span></span>
+                </div>
+                
+                <div id="question-text" style="font-size: 16px; margin-bottom: 20px; font-weight: 600;">
+                    Pertanyaan dimuat...
+                </div>
+
+                <div id="options-container">
+                    <!-- Opsi dihasilkan via JS -->
+                </div>
+
+                <div id="quiz-feedback" class="feedback-box" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+
+        <div id="emoji-popup" class="emoji-popup"></div>
+
+        <div id="screen-result" class="screen" style="align-items: center; justify-content: center; text-align: center;">
+            <div style="font-size: 60px; margin-bottom: 10px;">🏆</div>
+            <div class="title-text">Luar Biasa, <span id="display-student-name">Siswa</span>!</div>
+            <div class="subtitle-text">Kamu telah menyelesaikan misi belajar.</div>
+            
+            <div class="card" style="width: 100%; margin-top: 20px;">
+                <div style="font-size: 16px; color: var(--text-gray);">Skor Akhir Kamu:</div>
+                <div id="final-score-text" style="font-size: 48px; font-weight: 900; color: var(--pastel-pink-dark); margin: 10px 0;">100</div>
+                <div id="final-message" style="font-size: 14px; font-style: italic; margin-bottom: 15px;">Sangat membanggakan, siswa MTs hebat!</div>
+                <div id="save-status" style="font-size: 13px; padding: 10px; border-radius: 8px; display: none; font-weight: bold; animation: fadeIn 0.3s;"></div>
+            </div>
+
+            <button class="btn" onclick="resetApp()">Ulangi Pembelajaran 🔄</button>
+        </div>
+
+    </div>
+
+    <script>
+        // 1. Animasi Background (Awan dan Daun/Bunga jatuh)
+        function initBackground() {
+            const bg = document.getElementById('bg-anims');
+            
+            // Generate Clouds
+            for(let i = 0; i < 4; i++) {
+                let cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                let width = 60 + Math.random() * 60;
+                cloud.style.width = width + 'px';
+                cloud.style.height = (width * 0.3) + 'px';
+                cloud.style.top = (Math.random() * 30) + '%';
+                cloud.style.animationDuration = (15 + Math.random() * 20) + 's';
+                cloud.style.animationDelay = '-' + (Math.random() * 20) + 's';
+                
+                // styling pseudo elements purely via inline styles is hard, 
+                // so we rely on the CSS class for shape, just setting size here.
+                bg.appendChild(cloud);
+            }
+
+            // Generate Falling Petals
+            setInterval(() => {
+                let petal = document.createElement('div');
+                petal.className = 'flower-petal';
+                petal.style.left = (Math.random() * 100) + '%';
+                let size = 8 + Math.random() * 10;
+                petal.style.width = size + 'px';
+                petal.style.height = size + 'px';
+                petal.style.animationDuration = (5 + Math.random() * 5) + 's';
+                bg.appendChild(petal);
+                
+                // Remove petal after it falls
+                setTimeout(() => {
+                    petal.remove();
+                }, 10000);
+            }, 800);
+        }
+
+        // 2. Navigasi Layar & Login
+        let studentName = "";
+        let studentClass = "";
+        
+        function loginAndStart() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            const classInput = document.getElementById('student-class').value.trim();
+            const codeInput = document.getElementById('access-code').value.trim().toUpperCase();
+            const errorDiv = document.getElementById('login-error');
+            
+            if (nameInput === "") {
+                errorDiv.textContent = "Nama tidak boleh kosong ya!";
+                errorDiv.style.display = "block";
+                return;
+            }
+            if (classInput === "") {
+                errorDiv.textContent = "Kelas tidak boleh kosong (cth: IX-A)!";
+                errorDiv.style.display = "block";
+                return;
+            }
+            if (codeInput !== "BILUHU") {
+                errorDiv.textContent = "Kode akses salah. (Petunjuk: Nama Kecamatan kita)";
+                errorDiv.style.display = "block";
+                return;
+            }
+            
+            studentName = nameInput;
+            studentClass = classInput;
+            errorDiv.style.display = "none";
+            showScreen('screen-material');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo(0, 0);
+            
+            if(screenId === 'screen-quiz' && currentQuestionIndex === 0) {
+                loadQuestion();
+            }
+        }
+
+        // 3. Logika Simulasi Interaktif (Tap and Place)
+        let selectedWord = "";
+        let selectedElement = null;
+        let simCompleted = {1: false, 2: false};
+
+        function selectWord(element, word) {
+            // Reset previous selection
+            if(selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+            selectedWord = word;
+            selectedElement = element;
+            element.classList.add('selected');
+        }
+
+        function placeWord(zoneId) {
+            if(!selectedWord) return; // Harus pilih kata dulu
+            
+            const dropZone = document.getElementById('dz-' + zoneId);
+            const feedbackBox = document.getElementById('fb-sim-' + zoneId);
+            
+            // Cek Jawaban
+            let isCorrect = false;
+            let explanation = "";
+
+            if(zoneId === 1) {
+                // Kalimat: ... we arrived, we immediately took selfie.
+                if(selectedWord === 'As soon as' || selectedWord === 'Once') {
+                    isCorrect = true;
+                    explanation = `<b>Tepat sekali!</b> '${selectedWord}' menunjukkan bahwa tindakan foto selfie dilakukan <i>langsung segera</i> setelah sampai di pantai.`;
+                } else {
+                    explanation = `Kurang tepat. Coba pikirkan, kita berfoto segera setelah sampai. Pilih kata yang bermakna 'segera setelah'.`;
+                }
+            } else if(zoneId === 2) {
+                // Kalimat: We prepared swimming suits ... we jumped into the sea.
+                if(selectedWord === 'Before') {
+                    isCorrect = true;
+                    explanation = `<b>Benar!</b> Kita tentu menyiapkan baju renang <i>sebelum</i> ('before') melompat ke laut demi keselamatan.`;
+                } else {
+                    explanation = `Kurang tepat. Logikanya, kita menyiapkan baju renang <i>sebelum</i> melompat ke air laut.`;
+                }
+            }
+
+            // Tampilkan visual
+            if(isCorrect) {
+                dropZone.textContent = selectedWord;
+                dropZone.style.color = "var(--success)";
+                dropZone.style.borderBottomColor = "var(--success)";
+                
+                feedbackBox.innerHTML = "✅ " + explanation;
+                feedbackBox.style.display = "block";
+                feedbackBox.style.backgroundColor = "#E8F8F5";
+                feedbackBox.style.color = "#117A65";
+                
+                simCompleted[zoneId] = true;
+                selectedElement.style.visibility = 'hidden'; // Sembunyikan kata yang sudah benar
+                selectedWord = "";
+                selectedElement = null;
+                
+                checkSimComplete();
+            } else {
+                feedbackBox.innerHTML = "❌ " + explanation;
+                feedbackBox.style.display = "block";
+                feedbackBox.style.backgroundColor = "#FDEDEC";
+                feedbackBox.style.color = "#922B21";
+            }
+        }
+
+        function checkSimComplete() {
+            if(simCompleted[1] && simCompleted[2]) {
+                document.getElementById('btn-to-quiz').style.display = 'block';
+            }
+        }
+
+        // 4. Logika Kuis Evaluasi
+        const quizData = [
+            {
+                q: "We bought some local snacks (pisang goroho) ... we drove to the beach.",
+                options: ["before", "after", "as soon as", "while"],
+                answer: 0, // index 0 (before)
+                feedback: "Kamu membeli cemilan <b>sebelum</b> berkendara ke pantai untuk bekal di jalan."
+            },
+            {
+                q: "... the fisherman anchored his boat, he sold his fresh fish to the market.",
+                options: ["Before", "But", "Once", "During"],
+                answer: 2, // Once
+                feedback: "<b>Once</b> (Segera setelah). Nelayan langsung menjual ikannya saat perahu bersandar."
+            },
+            {
+                q: "They went back to Gorontalo city ... they finished exploring Biluhu.",
+                options: ["before", "after", "once", "so"],
+                answer: 1, // after
+                feedback: "Mereka pulang ke kota <b>setelah</b> (after) selesai menjelajah."
+            },
+            {
+                q: "... I saw the beautiful coral reef under the sea, I was totally amazed.",
+                options: ["Before", "After", "As soon as", "Because"],
+                answer: 2, // As soon as
+                feedback: "<b>As soon as</b> menunjukkan reaksi seketika (langsung kagum saat melihat)."
+            },
+            {
+                q: "We cleaned up our rubbish ... we left the beach area to keep it clean.",
+                options: ["after", "before", "once", "as soon as"],
+                answer: 1, // before
+                feedback: "Sangat penting membuang sampah <b>sebelum</b> (before) meninggalkan area pantai!"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let studentAnswers = [];
+        let quizAnswered = false;
+
+        // --- PASTE URL WEB APP GOOGLE SCRIPT ANDA DI BAWAH INI ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbztr8x7FtfzKUpdfQwtBndlJu6QoI1b8WA8vEGld5IuA46JsZG7b1umB2WdC2IrHgBX/exec"; 
+
+        function loadQuestion() {
+            quizAnswered = false;
+            document.getElementById('quiz-feedback').style.display = 'none';
+            
+            const qData = quizData[currentQuestionIndex];
+            document.getElementById('q-current').textContent = currentQuestionIndex + 1;
+            document.getElementById('question-text').textContent = qData.q;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            qData.options.forEach((opt, index) => {
+                let div = document.createElement('div');
+                div.className = 'quiz-option';
+                div.textContent = opt;
+                div.onclick = () => selectQuizOption(index, div);
+                optionsContainer.appendChild(div);
+            });
+        }
+
+        function triggerEmoji(emoji) {
+            const popup = document.getElementById('emoji-popup');
+            popup.textContent = emoji;
+            popup.classList.remove('show');
+            // Sedikit delay agar animasi bisa di-trigger ulang jika dipanggil lagi
+            setTimeout(() => {
+                popup.classList.add('show');
+            }, 50);
+        }
+
+        function selectQuizOption(selectedIndex, optionElement) {
+            if(quizAnswered) return; // Hanya bisa jawab 1 kali
+            quizAnswered = true;
+            
+            const qData = quizData[currentQuestionIndex];
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const allOptions = document.querySelectorAll('.quiz-option');
+            
+            // Rekam jawaban siswa
+            studentAnswers.push(qData.options[selectedIndex]);
+            
+            if(selectedIndex === qData.answer) {
+                optionElement.classList.add('correct');
+                score += 20; // 5 soal = max 100
+                correctCount++;
+                document.getElementById('q-score').textContent = score;
+                
+                feedbackBox.innerHTML = "✅ <b>Benar!</b><br>" + qData.feedback;
+                feedbackBox.style.backgroundColor = "#E8F8F5";
+                feedbackBox.style.color = "#117A65";
+                triggerEmoji('⭐');
+            } else {
+                optionElement.classList.add('wrong');
+                allOptions[qData.answer].classList.add('correct'); // Tunjukkan yang benar
+                wrongCount++;
+                
+                feedbackBox.innerHTML = "❌ <b>Kurang Tepat.</b><br>" + qData.feedback;
+                feedbackBox.style.backgroundColor = "#FDEDEC";
+                feedbackBox.style.color = "#922B21";
+                triggerEmoji('😭');
+            }
+            
+            feedbackBox.style.display = "block";
+            
+            // Pindah otomatis setelah 3 detik untuk memberi waktu siswa membaca feedback & melihat animasi
+            setTimeout(() => {
+                nextQuestion();
+            }, 3000);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if(currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            showScreen('screen-result');
+            document.getElementById('display-student-name').textContent = studentName;
+            document.getElementById('final-score-text').textContent = score;
+            
+            let message = "";
+            if(score === 100) message = "Sempurna! Kamu sangat paham materi ini. Pertahankan prestasimu di MTs Muhajirin!";
+            else if(score >= 60) message = "Bagus sekali! Sedikit lagi berlatih kamu akan jadi master Bahasa Inggris.";
+            else message = "Jangan menyerah! Ayo baca kembali ringkasan materi dan coba lagi.";
+            
+            document.getElementById('final-message').textContent = message;
+
+            // Panggil fungsi simpan ke Database
+            saveDataToGoogleSheets();
+        }
+
+        function saveDataToGoogleSheets() {
+            if(!GAS_URL || GAS_URL === "URL_GOOGLE_APPS_SCRIPT_ANDA_DISINI") {
+                console.warn("GAS URL belum diatur. Data tidak disimpan.");
+                return;
+            }
+
+            const statusDiv = document.getElementById('save-status');
+            statusDiv.style.display = "block";
+            statusDiv.style.backgroundColor = "var(--pastel-blue)";
+            statusDiv.style.color = "var(--pastel-blue-dark)";
+            statusDiv.textContent = "⏳ Menyimpan hasil belajarmu ke database Guru...";
+
+            const payload = {
+                nama: studentName,
+                kelas: studentClass,
+                skor: score,
+                benar: correctCount,
+                salah: wrongCount,
+                jawaban: studentAnswers,
+                questionsData: quizData // Dikirim agar Script otomatis menyusun sheet 'Soal'
+            };
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.result === 'success') {
+                    statusDiv.style.backgroundColor = "#E8F8F5";
+                    statusDiv.style.color = "#117A65";
+                    statusDiv.textContent = "✅ Hasil belajarmu sudah tersimpan di database Guru!";
+                } else {
+                    throw new Error(data.error);
+                }
+            })
+            .catch(error => {
+                statusDiv.style.backgroundColor = "#FDEDEC";
+                statusDiv.style.color = "#922B21";
+                statusDiv.textContent = "❌ Gagal menyimpan: Cek koneksi internetmu.";
+                console.error('Error Save Data:', error);
+            });
+        }
+
+        function resetApp() {
+            currentQuestionIndex = 0;
+            score = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            studentAnswers = [];
+            document.getElementById('q-score').textContent = 0;
+            document.getElementById('save-status').style.display = 'none';
+            
+            // Reset Simulasi
+            simCompleted = {1: false, 2: false};
+            document.getElementById('dz-1').textContent = "......";
+            document.getElementById('dz-1').style.color = "var(--pastel-blue-dark)";
+            document.getElementById('dz-1').style.borderBottomColor = "var(--text-dark)";
+            document.getElementById('fb-sim-1').style.display = "none";
+            
+            document.getElementById('dz-2').textContent = "......";
+            document.getElementById('dz-2').style.color = "var(--pastel-blue-dark)";
+            document.getElementById('dz-2').style.borderBottomColor = "var(--text-dark)";
+            document.getElementById('fb-sim-2').style.display = "none";
+            
+            document.querySelectorAll('.draggable-word').forEach(el => {
+                el.style.visibility = 'visible';
+                el.classList.remove('selected');
+            });
+            document.getElementById('btn-to-quiz').style.display = 'none';
+            selectedWord = "";
+            selectedElement = null;
+
+            // Reset input form
+            document.getElementById('student-name').value = "";
+            document.getElementById('student-class').value = "";
+            document.getElementById('access-code').value = "";
+
+            showScreen('screen-home');
+        }
+
+        // Inisialisasi saat web dimuat
+        window.onload = () => {
+            initBackground();
+        };
+
+    </script>
+</body>
+</html>
